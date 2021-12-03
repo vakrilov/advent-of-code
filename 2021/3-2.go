@@ -5,7 +5,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
+
+func elapsed(what string) func() {
+	start := time.Now()
+	return func() {
+		fmt.Printf("%s took %v\n", what, time.Since(start))
+	}
+}
 
 func main() {
 	// Parse
@@ -15,6 +23,7 @@ func main() {
 	}
 
 	lines := strings.Split(string(dat), "\n")
+	defer elapsed("run")()
 
 	filtered := lines
 	pos := 0
