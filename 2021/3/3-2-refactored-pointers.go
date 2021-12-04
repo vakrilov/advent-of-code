@@ -43,7 +43,7 @@ func main() {
 			*buffer1 = (*buffer1)[:0]
 
 			for _, line := range *current {
-				if line[pos:pos+1] == "1" { // 2) Is there a easier way to do a single rune check
+				if line[pos] == '1' { // 2) Is there a easier way to do a single rune check
 					*buffer1 = append(*buffer1, line)
 				} else {
 					*buffer0 = append(*buffer0, line)

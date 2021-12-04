@@ -42,7 +42,7 @@ func main() {
 			zeros = zeros[:0]
 
 			for _, line := range filtered {
-				if line[pos:pos+1] == "1" { // 2) Is there a easier way to do a single rune check
+				if line[pos] == '1' { // 2) Is there a easier way to do a single rune check
 					ones = append(ones, line)
 				} else {
 					zeros = append(zeros, line)

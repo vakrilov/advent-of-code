@@ -33,7 +33,7 @@ func main() {
 		var zeros []string
 
 		for _, line := range filtered {
-			if line[pos:pos+1] == "1" {
+			if line[pos] == '1' {
 				ones = append(ones, line)
 			} else {
 				zeros = append(zeros, line)
@@ -63,7 +63,7 @@ func main() {
 		var zeros []string
 
 		for _, line := range filtered {
-			if line[pos:pos+1] == "1" {
+			if line[pos] == '1' {
 				ones = append(ones, line)
 			} else {
 				zeros = append(zeros, line)
