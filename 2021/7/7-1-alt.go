@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -29,33 +29,26 @@ func Max(x, y int) int {
 	return y
 }
 
+func cost(positions []int, x int) int {
+	result := 0
+	for _, num := range positions {
+		result += AbsDiff(num, x)
+	}
+	return result
+}
+
 func main() {
 	// dat, _ := os.ReadFile("input-test.txt")
 	dat, _ := os.ReadFile("input.txt")
 	var positions []int
 
-	min, max := 5000, 0
 	for _, numstr := range strings.Split(string(dat), ",") {
 		num, _ := strconv.Atoi(numstr)
 		positions = append(positions, num)
-		min = Min(min, num)
-		max = Max(max, num)
 	}
 
-	result := math.MaxInt64
-	for goal := min; goal <= max; goal++ {
-		sum := 0
-		for _, num := range positions {
-			diff := AbsDiff(num, goal)
-			// Part 1
-			// sum += diff
+	sort.Ints(positions)
 
-			//Part 2
-			sum += (diff * (diff + 1)) / 2
-		}
-
-		result = Min(sum, result)
-	}
-
+	result := cost(positions, positions[len(positions)/2])
 	fmt.Println(result)
 }
