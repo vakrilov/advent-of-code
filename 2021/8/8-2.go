@@ -6,15 +6,6 @@ import (
 	"strings"
 )
 
-func containsAll(digit string, from string) bool {
-	for _, r := range from {
-		if !strings.ContainsRune(digit, r) {
-			return false
-		}
-	}
-	return true
-}
-
 func containsCount(digit string, from string) int {
 	count := 0
 	for _, r := range from {
@@ -23,6 +14,9 @@ func containsCount(digit string, from string) int {
 		}
 	}
 	return count
+}
+func containsAll(digit string, from string) bool {
+	return containsCount(digit, from) == len(from)
 }
 
 func matchLen5(digit string, one string, four string) int {
