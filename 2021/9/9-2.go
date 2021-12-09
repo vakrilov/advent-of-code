@@ -32,22 +32,18 @@ func isLocalMin(board [ROW][COL]int, i int, j int) bool {
 	return true
 }
 
-func hash(i int, j int) int {
-	return i*10000 + j
-}
-
-func expand(board [ROW][COL]int, visited map[int]bool, i int, j int) int {
-	if i < 0 || j < 0 || i >= ROW || j >= COL || visited[hash(i, j)] || board[i][j] == 9 {
+func expand(board *[ROW][COL]int, i int, j int) int {
+	if i < 0 || j < 0 || i >= ROW || j >= COL || board[i][j] == 9 {
 		return 0
 	}
 
-	visited[hash(i, j)] = true
+	board[i][j] = 9
 
 	return 1 +
-		expand(board, visited, i-1, j) +
-		expand(board, visited, i+1, j) +
-		expand(board, visited, i, j-1) +
-		expand(board, visited, i, j+1)
+		expand(board, i-1, j) +
+		expand(board, i+1, j) +
+		expand(board, i, j-1) +
+		expand(board, i, j+1)
 }
 
 func main() {
@@ -65,7 +61,7 @@ func main() {
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
 			if isLocalMin(board, i, j) {
-				basins = append(basins, expand(board, make(map[int]bool), i, j))
+				basins = append(basins, expand(&board, i, j))
 			}
 		}
 	}
