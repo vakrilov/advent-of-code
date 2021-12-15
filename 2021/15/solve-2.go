@@ -1,8 +1,8 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
-	"math"
 	"os"
 	"strings"
 	"time"
@@ -23,8 +23,8 @@ const file = "input.txt"
 
 type Node struct {
 	cost int
-	x    int
-	y    int
+	col  int
+	row  int
 }
 
 type NodeHeap []Node
@@ -32,11 +32,9 @@ type NodeHeap []Node
 func (h NodeHeap) Len() int           { return len(h) }
 func (h NodeHeap) Less(i, j int) bool { return h[i].cost < h[j].cost }
 func (h NodeHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-
 func (h *NodeHeap) Push(x interface{}) {
 	*h = append(*h, x.(Node))
 }
-
 func (h *NodeHeap) Pop() interface{} {
 	old := *h
 	n := len(old)
@@ -50,62 +48,49 @@ func main() {
 	lines := strings.Split(string(dat), "\n")
 
 	var board [N * 5][N * 5]int
-	var costs [N * 5][N * 5]int
 	var visited [N * 5][N * 5]bool
 	for row := 0; row < N; row++ {
 		for col := 0; col < N; col++ {
 			val := int(lines[row][col]) - '0'
-
 			for i := 0; i < 5; i++ {
 				for j := 0; j < 5; j++ {
 					board[row+i*N][col+j*N] = 1 + (val+i+j-1)%9
-					costs[row+i*N][col+j*N] = math.MaxInt64
 				}
 			}
 		}
 	}
-	costs[0][0] = 0
 
 	defer elapsed("run")()
+
+	h := &NodeHeap{Node{col: 0, row: 0, cost: 0}}
+	heap.Init(h)
 
 	update := func(row int, col int, cost int) {
 		if row < 0 || col < 0 || row >= N*5 || col >= N*5 || visited[row][col] {
 			return
 		}
 
-		if costs[row][col] > cost+board[row][col] {
-			costs[row][col] = cost + board[row][col]
+		heap.Push(h, Node{col: col, row: row, cost: cost + board[row][col]})
+	}
+
+	visit := func(n *Node) {
+		visited[n.row][n.col] = true
+		update(n.row-1, n.col, n.cost)
+		update(n.row+1, n.col, n.cost)
+		update(n.row, n.col-1, n.cost)
+		update(n.row, n.col+1, n.cost)
+	}
+
+	for h.Len() > 0 {
+		current := heap.Pop(h).(Node)
+		if visited[current.row][current.col] {
+			continue
 		}
-	}
-
-	visit := func(row int, col int) {
-		visited[row][col] = true
-		currentCost := costs[row][col]
-
-		update(row-1, col, currentCost)
-		update(row+1, col, currentCost)
-		update(row, col-1, currentCost)
-		update(row, col+1, currentCost)
-	}
-
-	cRow, cCol := 0, 0
-
-	for {
-		visit(cRow, cCol)
-
-		if cRow == N*5-1 && cCol == N*5-1 {
+		if current.row == N*5-1 && current.col == N*5-1 {
+			fmt.Println(current.cost)
 			break
 		}
 
-		bestCost := math.MaxInt64
-		for row := 0; row < N*5; row++ {
-			for col := 0; col < N*5; col++ {
-				if !visited[row][col] && bestCost > costs[row][col] {
-					cRow, cCol, bestCost = row, col, costs[row][col]
-				}
-			}
-		}
+		visit(&current)
 	}
-
-	fmt.Println(costs[N*5-1][N*5-1])
 }
