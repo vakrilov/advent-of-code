@@ -6,9 +6,10 @@ import (
 	"strconv"
 )
 
-// const file = "input.txt"
+const file = "input.txt"
+
 // const file = "input-test.txt"
-const file = "input-test2.txt"
+// const file = "input-test2.txt"
 
 var versionSum int
 
@@ -31,6 +32,46 @@ var hex2bin = map[rune]string{
 	'F': "1111",
 }
 
+var type2func = map[int]func(a int, b int) int{
+	0: func(a int, b int) int { return a + b },
+	1: func(a int, b int) int { return a * b },
+	2: func(a int, b int) int {
+		if a < b {
+			return a
+		} else {
+			return b
+		}
+	},
+	3: func(a int, b int) int {
+		if a > b {
+			return a
+		} else {
+			return b
+		}
+	},
+	5: func(a int, b int) int {
+		if a > b {
+			return 1
+		} else {
+			return 0
+		}
+	},
+	6: func(a int, b int) int {
+		if a < b {
+			return 1
+		} else {
+			return 0
+		}
+	},
+	7: func(a int, b int) int {
+		if a == b {
+			return 1
+		} else {
+			return 0
+		}
+	},
+}
+
 type Packet struct {
 	version int
 	id      int
@@ -39,7 +80,7 @@ type Packet struct {
 	sub     *[]Packet
 }
 
-func parseBits(in string) int {
+func readBits(in string) int {
 	r, _ := strconv.ParseInt(in, 2, 64)
 	return int(r)
 }
@@ -49,7 +90,7 @@ func readLiteral(in string) (int, int) {
 	value := 0
 	for {
 		value = value << 4
-		value += parseBits(in[idx+1 : idx+5])
+		value += readBits(in[idx+1 : idx+5])
 		idx += 5
 		if in[idx-5] == '0' {
 			break
@@ -62,7 +103,7 @@ func readOperator(in string) (*[]Packet, int) {
 	subPackets := make([]Packet, 0)
 
 	if in[0] == '0' {
-		subLength := parseBits(in[1:16])
+		subLength := readBits(in[1:16])
 
 		idx := 0
 		for idx < subLength {
@@ -73,7 +114,7 @@ func readOperator(in string) (*[]Packet, int) {
 
 		return &subPackets, 16 + subLength
 	} else {
-		packetCount := parseBits(in[1:12])
+		packetCount := readBits(in[1:12])
 		idx := 12
 		for i := 0; i < packetCount; i++ {
 			p := readPacket(in[idx:])
@@ -85,8 +126,8 @@ func readOperator(in string) (*[]Packet, int) {
 }
 
 func readPacket(in string) Packet {
-	version := parseBits(in[0:3])
-	id := parseBits(in[3:6])
+	version := readBits(in[0:3])
+	id := readBits(in[3:6])
 
 	versionSum += version
 
@@ -122,55 +163,13 @@ func eval(p *Packet) int {
 		values[i] = eval(&(*p.sub)[i])
 	}
 
-	switch p.id {
-	case 5:
-		if values[0] > values[1] {
-			return 1
-		} else {
-			return 0
-		}
-	case 6:
-		if values[0] < values[1] {
-			return 1
-		} else {
-			return 0
-		}
-	case 7:
-		if values[0] == values[1] {
-			return 1
-		} else {
-			return 0
-		}
-	case 0:
-		res := 0
-		for _, v := range values {
-			res += v
-		}
-		return res
-	case 1:
-		res := 1
-		for _, v := range values {
-			res *= v
-		}
-		return res
-	case 2:
-		res := values[0]
-		for _, v := range values[1:] {
-			if res > v {
-				res = v
-			}
-		}
-		return res
-	case 3:
-		res := values[0]
-		for _, v := range values[1:] {
-			if res < v {
-				res = v
-			}
-		}
-		return res
+	f := type2func[p.id]
+	// Poor man's reduce
+	acc := values[0]
+	for _, next := range values[1:] {
+		acc = f(acc, next)
 	}
-	return 0
+	return acc
 }
 
 func main() {
@@ -185,5 +184,4 @@ func main() {
 	fmt.Println(p)
 	fmt.Println("Part 1:", versionSum)
 	fmt.Println("Part 2:", eval(&p))
-
 }
