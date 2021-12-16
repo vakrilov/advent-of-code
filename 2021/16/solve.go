@@ -38,37 +38,32 @@ var type2func = map[int]func(a int, b int) int{
 	2: func(a int, b int) int {
 		if a < b {
 			return a
-		} else {
-			return b
 		}
+		return b
 	},
 	3: func(a int, b int) int {
 		if a > b {
 			return a
-		} else {
-			return b
 		}
+		return b
 	},
 	5: func(a int, b int) int {
 		if a > b {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	},
 	6: func(a int, b int) int {
 		if a < b {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	},
 	7: func(a int, b int) int {
 		if a == b {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	},
 }
 
@@ -100,7 +95,7 @@ func readLiteral(in string) (int, int) {
 }
 
 func readOperator(in string) (*[]Packet, int) {
-	subPackets := make([]Packet, 0)
+	subPackets := make([]Packet, 0, 2)
 
 	if in[0] == '0' {
 		subLength := readBits(in[1:16])
@@ -130,27 +125,18 @@ func readPacket(in string) Packet {
 	id := readBits(in[3:6])
 
 	versionSum += version
+	result := Packet{
+		version: version,
+		id:      id,
+	}
 
 	if id == 4 {
 		value, literalLen := readLiteral(in[6:])
-
-		return Packet{
-			version: version,
-			id:      id,
-			length:  literalLen + 6,
-			value:   value,
-			sub:     nil,
-		}
+		result.length, result.value = literalLen+6, value
 	} else {
-		sub, length := readOperator(in[6:])
-		return Packet{
-			version: version,
-			id:      id,
-			length:  length + 6,
-			value:   0,
-			sub:     sub,
-		}
+		result.sub, result.length = readOperator(in[6:])
 	}
+	return result
 }
 
 func eval(p *Packet) int {
@@ -158,17 +144,15 @@ func eval(p *Packet) int {
 		return p.value
 	}
 
-	values := make([]int, len(*p.sub))
-	for i := 0; i < len(values); i++ {
-		values[i] = eval(&(*p.sub)[i])
-	}
-
 	f := type2func[p.id]
+
 	// Poor man's reduce
-	acc := values[0]
-	for _, next := range values[1:] {
+	acc := eval(&(*p.sub)[0])
+	for i := 1; i < len(*p.sub); i++ {
+		next := eval(&(*p.sub)[i])
 		acc = f(acc, next)
 	}
+
 	return acc
 }
 
