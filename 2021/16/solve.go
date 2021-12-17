@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
-const file = "input.txt"
+const file = "input-bobi.txt"
+
+// const file = "input.txt"
 
 // const file = "input-test.txt"
 // const file = "input-test2.txt"
@@ -67,12 +70,12 @@ var type2func = map[int]func(a int, b int) int{
 	},
 }
 
-type Packet struct {
+type packet struct {
 	version int
 	id      int
 	length  int
 	value   int
-	sub     *[]Packet
+	sub     *[]packet
 }
 
 func readBits(in string) int {
@@ -94,8 +97,8 @@ func readLiteral(in string) (int, int) {
 	return value, idx
 }
 
-func readOperator(in string) (*[]Packet, int) {
-	subPackets := make([]Packet, 0, 2)
+func readOperator(in string) (*[]packet, int) {
+	subPackets := make([]packet, 0, 2)
 
 	if in[0] == '0' {
 		subLength := readBits(in[1:16])
@@ -120,12 +123,12 @@ func readOperator(in string) (*[]Packet, int) {
 	}
 }
 
-func readPacket(in string) Packet {
+func readPacket(in string) packet {
 	version := readBits(in[0:3])
 	id := readBits(in[3:6])
 
 	versionSum += version
-	result := Packet{
+	result := packet{
 		version: version,
 		id:      id,
 	}
@@ -135,11 +138,12 @@ func readPacket(in string) Packet {
 		result.length, result.value = literalLen+6, value
 	} else {
 		result.sub, result.length = readOperator(in[6:])
+		result.length += 6
 	}
 	return result
 }
 
-func eval(p *Packet) int {
+func eval(p *packet) int {
 	if p.id == 4 {
 		return p.value
 	}
@@ -153,7 +157,24 @@ func eval(p *Packet) int {
 		acc = f(acc, next)
 	}
 
+	p.value = acc
 	return acc
+}
+
+var indent = 0
+
+func (p packet) String() string {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("Packet V[%d] ID[%d] V[%d]", p.version, p.id, p.value))
+	indent += 2
+	if p.sub != nil {
+		for i, p := range *p.sub {
+			sb.WriteString(fmt.Sprintf("\n%s%d  %s", strings.Repeat(" ", indent), i, p.String()))
+		}
+	}
+	indent -= 2
+	return sb.String()
 }
 
 func main() {
@@ -165,7 +186,9 @@ func main() {
 	}
 
 	p := readPacket(inputBin)
-	fmt.Println(p)
+
 	fmt.Println("Part 1:", versionSum)
 	fmt.Println("Part 2:", eval(&p))
+
+	fmt.Println(p)
 }
