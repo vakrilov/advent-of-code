@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-const file = "input-test.txt"
+// const file = "input-test.txt"
 
-// const file = "input.txt"
+const file = "input.txt"
 
 type node struct {
 	level int
@@ -60,6 +60,7 @@ func reduce(num *list.List) bool {
 		}
 	}
 
+	// check split
 	if !hasReduced {
 		for e := num.Front(); e != nil; e = e.Next() {
 			v := e.Value.(*node)
@@ -75,26 +76,10 @@ func reduce(num *list.List) bool {
 }
 
 func print(num *list.List) {
-	// for e := num.Front(); e != nil; e = e.Next() {
-	// 	v := e.Value.(*node)
-	// 	fmt.Println(strings.Repeat("  ", v.level-1), v.value)
-	// }
-	lastLvl := 0
 	for e := num.Front(); e != nil; e = e.Next() {
 		v := e.Value.(*node)
-		if lastLvl < v.level {
-			fmt.Print(strings.Repeat("[", v.level-lastLvl))
-		} else if lastLvl > v.level {
-			fmt.Print(strings.Repeat("]", lastLvl-v.level))
-		} else {
-			fmt.Print(",")
-		}
-		fmt.Print(v.value)
-
-		lastLvl = v.level
+		fmt.Println(strings.Repeat("  ", v.level), v.value)
 	}
-	fmt.Println(strings.Repeat("]", lastLvl))
-
 }
 
 func makeNum(line string) *list.List {
@@ -151,6 +136,27 @@ func reduceAll(num *list.List) *list.List {
 	return num
 }
 
+func eval(num *list.List) int {
+	for lvl := 4; lvl > 0; lvl-- {
+		for e := num.Front(); e != nil; e = e.Next() {
+			v := e.Value.(*node)
+			if v.level == lvl {
+				vn := e.Next().Value.(*node)
+				sum := v.value*3 + vn.value*2
+				new := num.InsertBefore(&node{
+					level: lvl - 1,
+					value: sum,
+				}, e)
+				num.Remove(e.Next())
+				num.Remove(e)
+				e = new
+			}
+		}
+	}
+
+	return num.Front().Value.(*node).value
+}
+
 func main() {
 	dat, _ := os.ReadFile(file)
 	lines := strings.Split(string(dat), "\n")
@@ -160,10 +166,23 @@ func main() {
 		num = add(num, makeNum(nextLine))
 	}
 
-	// // line := "[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]"
-	// line := "[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]"
-	// num := makeNum(line)
+	fmt.Println("Part 1", eval(num))
 
-	// fmt.Println(num)
-	print(num)
+	max := 0
+	for i := 0; i < len(lines)-1; i++ {
+		for j := 1; j < len(lines); j++ {
+			a := lines[i]
+			b := lines[j]
+
+			sum1 := eval(add(makeNum(a), makeNum(b)))
+			sum2 := eval(add(makeNum(b), makeNum(a)))
+			if max < sum1 {
+				max = sum1
+			}
+			if max < sum2 {
+				max = sum2
+			}
+		}
+	}
+	fmt.Println("Part 2", max)
 }
