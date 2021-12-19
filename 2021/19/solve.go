@@ -34,7 +34,6 @@ var rotateY = &Transform{
 	{0, 1, 0},
 	{-1, 0, 0},
 }
-
 var rotateZ = &Transform{
 	{0, -1, 0},
 	{1, 0, 0},
@@ -68,7 +67,7 @@ func mul(a, b *Transform) *Transform {
 	return &r
 }
 
-func createTransforms() {
+func initTransforms() {
 	var tranMap = make(map[Transform]bool)
 	var mat = id
 	tranMap[*mat] = true
@@ -96,8 +95,7 @@ func createTransforms() {
 		tranMap[*mat] = true
 	}
 
-	for k, _ := range tranMap {
-		// print(&k)
+	for k := range tranMap {
 		transforms = append(transforms, k)
 	}
 }
@@ -113,6 +111,20 @@ func readPoint(line string) *Point {
 func dist(a, b *Point) int {
 	dx, dy, dz := a.x-b.x, a.y-b.y, a.z-b.z
 	return dx*dx + dy*dy + dz*dz
+}
+
+func manhattanDist(a, b *Point) int {
+	dx, dy, dz := a.x-b.x, a.y-b.y, a.z-b.z
+	if dx < 0 {
+		dx = -dx
+	}
+	if dy < 0 {
+		dy = -dy
+	}
+	if dx < 0 {
+		dz = -dz
+	}
+	return dx + dy + dz
 }
 
 func (a *Point) sub(b *Point) *Point {
@@ -143,7 +155,7 @@ func (p Point) String() string {
 	return fmt.Sprintf("(%d, %d, %d)", p.x, p.y, p.z)
 }
 
-func matchWithTransform(sc1, sc2 []*Point, t *Transform) *Point {
+func isMatchWithTransform(sc1, sc2 []*Point, t *Transform) *Point {
 	distances := make(map[Point]int)
 	for _, p1 := range sc1 {
 		for _, p2 := range sc2 {
@@ -161,11 +173,11 @@ func matchWithTransform(sc1, sc2 []*Point, t *Transform) *Point {
 	return nil
 }
 
-func tryMatch(sc1, sc2 []*Point) bool {
+func tryMatch(sc1, sc2 []*Point) *Point {
 	var rotateTransform *Transform
 	var translateTransform *Point
 	for _, t := range transforms {
-		translateTransform = matchWithTransform(sc1, sc2, &t)
+		translateTransform = isMatchWithTransform(sc1, sc2, &t)
 		if translateTransform != nil {
 			rotateTransform = &t
 			break
@@ -173,31 +185,20 @@ func tryMatch(sc1, sc2 []*Point) bool {
 	}
 
 	if translateTransform == nil {
-		return false
+		return nil
 	}
 
 	// find tranlate and do translate
 	for idx, p := range sc2 {
 		sc2[idx] = p.transform(rotateTransform).add(translateTransform)
 	}
-	return true
-}
-
-func find(sc1, sc2 []*Point, targetargetDist int) *Point {
-	for _, p1 := range sc1 {
-		for _, p2 := range sc2 {
-			if dist(p1, p2) == targetargetDist {
-				return p1.sub(p2)
-			}
-		}
-	}
-	return nil
+	return translateTransform
 }
 
 func main() {
 	dat, _ := os.ReadFile(file)
 	lines := strings.Split(string(dat), "\n")
-	createTransforms()
+	initTransforms()
 
 	var scanners [][]*Point
 	for _, line := range lines {
@@ -212,14 +213,17 @@ func main() {
 
 	matchedScanners := make(map[int]bool)
 	matchedScanners[0] = true
+	scannerPositions := make([]*Point, 0, len(scanners))
+	scannerPositions = append(scannerPositions, &Point{})
 
 	for len(matchedScanners) < len(scanners) {
 		for i := 0; i < len(scanners); i++ {
 			if !matchedScanners[i] {
-				for matchedIdx, _ := range matchedScanners {
+				for matchedIdx := range matchedScanners {
 					matched := tryMatch(scanners[matchedIdx], scanners[i])
-					if matched {
+					if matched != nil {
 						matchedScanners[i] = true
+						scannerPositions = append(scannerPositions, matched)
 						fmt.Println("Matched", i, "with", matchedIdx)
 						break
 					}
@@ -236,5 +240,15 @@ func main() {
 	}
 
 	fmt.Println("Part 1:", len(points))
+
+	maxDist := 0
+	for _, s1 := range scannerPositions {
+		for _, s2 := range scannerPositions {
+			if d := manhattanDist(s1, s2); d > maxDist {
+				maxDist = d
+			}
+		}
+	}
+	fmt.Println("Part 2:", maxDist)
 
 }
