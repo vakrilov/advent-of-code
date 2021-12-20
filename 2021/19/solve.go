@@ -165,7 +165,7 @@ func isMatchWithTransform(sc1, sc2 []*Point, t *Transform) *Point {
 
 	for k, v := range distances {
 		if v >= 12 {
-			fmt.Println("FOUND: matches", v, "distance", k)
+			// fmt.Println("FOUND: matches", v, "distance", k)
 			return &k
 		}
 	}
