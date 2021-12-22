@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // const file = "input-test2.txt"
@@ -54,7 +55,7 @@ func check(x, y, z int, cubes []*Cube) bool {
 	result := false
 
 	for _, c := range cubes {
-		if c.x1 <= x && x <= c.x2 && c.y1 <= y && y <= c.y2 && c.z1 <= z && z <= c.z2 {
+		if c.z1 <= z && z <= c.z2 {
 			result = c.setTo
 		}
 	}
@@ -62,9 +63,18 @@ func check(x, y, z int, cubes []*Cube) bool {
 	return result
 }
 
+func elapsed(what string) func() {
+	start := time.Now()
+	return func() {
+		fmt.Printf("%s took %v\n", what, time.Since(start))
+	}
+}
+
 func main() {
 	dat, _ := os.ReadFile(file)
 	lines := strings.Split(string(dat), "\n")
+
+	defer elapsed("run")()
 
 	cubes := make([]*Cube, len(lines))
 
@@ -106,12 +116,28 @@ func main() {
 	result := 0
 	for i := 0; i < len(xBorders)-1; i++ {
 		x := xBorders[i]
+
+		filteredCubesX := make([]*Cube, 0, len(lines))
+		for _, c := range cubes {
+			if c.x1 <= x && x <= c.x2 {
+				filteredCubesX = append(filteredCubesX, c)
+			}
+		}
+
 		for j := 0; j < len(yBorders)-1; j++ {
 			y := yBorders[j]
+
+			filteredCubesY := make([]*Cube, 0, len(filteredCubesX))
+			for _, c := range filteredCubesX {
+				if c.y1 <= y && y <= c.y2 {
+					filteredCubesY = append(filteredCubesY, c)
+				}
+			}
+
 			for k := 0; k < len(zBorders)-1; k++ {
 				z := zBorders[k]
 
-				if check(x, y, z, cubes) {
+				if check(x, y, z, filteredCubesY) {
 					result += (xBorders[i+1] - x) * (yBorders[j+1] - y) * (zBorders[k+1] - z)
 				}
 			}
