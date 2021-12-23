@@ -11,9 +11,10 @@ type Route = struct {
 }
 
 type Step = struct {
-	room         int
-	hall         int
-	isRoomToHall bool
+	room  int
+	hall  int
+	depth int
+	cost  int
 }
 
 type Rooms = [4][4]rune
@@ -27,6 +28,7 @@ var typeToCost = map[rune]int{
 }
 
 var bestSolutionSoFar = 100000000
+var bestTrack []Step
 
 var roomToHallMap = map[string]Route{
 	"0|0": {path: []int{1, 0}, cost: 3},
@@ -97,7 +99,7 @@ func isWin(rooms *Rooms) bool {
 		rooms[3][0] == 'd' && rooms[3][1] == 'd' && rooms[3][2] == 'd' && rooms[3][3] == 'd'
 }
 
-func moveFromRoomToHall(fromRoom, toHall int, rooms Rooms, halls Halls, currentCost int, trace []Step) (bool, int) {
+func moveFromRoomToHall(fromRoom, toHall int, rooms *Rooms, halls *Halls) (bool, int, int) {
 	// print(rooms, halls)
 	room := &rooms[fromRoom]
 	depth := 0
@@ -105,8 +107,9 @@ func moveFromRoomToHall(fromRoom, toHall int, rooms Rooms, halls Halls, currentC
 		depth++
 	}
 
+	// room is empty
 	if depth == 4 {
-		return false, 0
+		return false, 0, 0
 	}
 
 	aType := room[depth]
@@ -121,7 +124,7 @@ func moveFromRoomToHall(fromRoom, toHall int, rooms Rooms, halls Halls, currentC
 			}
 		}
 		if !hasDifferent {
-			return false, 0
+			return false, 0, 0
 		}
 	}
 
@@ -129,36 +132,32 @@ func moveFromRoomToHall(fromRoom, toHall int, rooms Rooms, halls Halls, currentC
 	for _, hallPos := range route.path {
 		if halls[hallPos] != '.' {
 			// path is blocked
-			return false, 0
+			return false, 0, 0
 		}
 	}
 
 	pathLength := route.cost + depth
-	room[depth] = '.'
-	halls[toHall] = aType
-	cost := typeToCost[aType] * pathLength
-	// print(rooms, halls)
-	return move(rooms, halls, currentCost+cost, append(trace, Step{room: fromRoom, hall: toHall, isRoomToHall: true}))
+	return true, typeToCost[aType] * pathLength, depth
 }
 
-func moveFromHallToRoom(fromHall, toRoom int, rooms Rooms, halls Halls, currentCost int, trace []Step) (bool, int) {
+func moveFromHallToRoom(fromHall, toRoom int, rooms *Rooms, halls *Halls) (bool, int, int) {
 	// print(rooms, halls)
 
 	aType := halls[fromHall]
 	room := &rooms[toRoom]
 
 	if aType == '.' {
-		return false, 0
+		return false, 0, 0
 	}
 
 	if int(aType-'a') != toRoom {
 		// not the correct room type
-		return false, 0
+		return false, 0, 0
 	}
 
 	if room[0] != '.' {
 		// room is full
-		return false, 0
+		return false, 0, 0
 	}
 
 	depth := 0
@@ -167,7 +166,7 @@ func moveFromHallToRoom(fromHall, toRoom int, rooms Rooms, halls Halls, currentC
 			depth++
 		} else if room[i] != aType {
 			// cannot go to a room occupied with a wrong type fish
-			return false, 0
+			return false, 0, 0
 		}
 	}
 	depth--
@@ -175,24 +174,20 @@ func moveFromHallToRoom(fromHall, toRoom int, rooms Rooms, halls Halls, currentC
 	route := hallToRoomMap[strconv.Itoa(fromHall)+"|"+strconv.Itoa(toRoom)]
 	for _, hallPos := range route.path {
 		if halls[hallPos] != '.' {
-			return false, 0
+			return false, 0, 0
 		}
 	}
 
 	pathLength := route.cost + depth
-	room[depth] = aType
-	halls[fromHall] = '.'
-	cost := typeToCost[aType] * pathLength
-	// print(rooms, halls)
-	return move(rooms, halls, currentCost+cost, append(trace, Step{room: toRoom, hall: fromHall, isRoomToHall: false}))
+	return true, typeToCost[aType] * pathLength, depth
 }
 
 var count = 0
 
-func move(rooms Rooms, halls Halls, cost int, trace []Step) (bool, int) {
+func move(rooms Rooms, halls Halls, cost int, trace []Step) {
 	count++
-	if count%1000000 == 0 {
-		fmt.Println("move: ", cost, trace)
+	if count%10000000 == 0 {
+		fmt.Println(trace)
 	}
 
 	if len(trace) > 32 {
@@ -202,48 +197,49 @@ func move(rooms Rooms, halls Halls, cost int, trace []Step) (bool, int) {
 	}
 
 	if isWin(&rooms) {
-		count++
-		if count%1000 == 0 {
-			fmt.Println("SOLUTION: ", cost, trace)
-		}
+		// fmt.Println("SOLUTION: ", cost, trace)
 		if cost < bestSolutionSoFar {
 			bestSolutionSoFar = cost
+			bestTrack = make([]Step, len(trace))
+			copy(bestTrack, trace)
 		}
-		// print(rooms, halls)
-		return true, cost
+		return
 	}
 
 	if cost >= bestSolutionSoFar {
-		return false, 0
+		return
 	}
 
-	best := 10000000
-	for room := 0; room < 4; room++ {
-		for hall := 0; hall < 7; hall++ {
-			isOK, newCost := moveFromRoomToHall(room, hall, rooms, halls, cost, trace)
-			if isOK && newCost < best {
-				best = newCost
+	for room := 3; room >= 0; room-- {
+		for hall := 6; hall >= 0; hall-- {
+			if isOK, moveCost, depth := moveFromRoomToHall(room, hall, &rooms, &halls); isOK {
+				rooms[room][depth], halls[hall] = halls[hall], rooms[room][depth]
+				// fmt.Println(count, "--> ")
+				// print(rooms, halls)
+				move(rooms, halls, cost+moveCost, append(trace, Step{room: room, depth: depth, hall: hall, cost: moveCost}))
+				rooms[room][depth], halls[hall] = halls[hall], rooms[room][depth]
+				// fmt.Println(count, "<-- ")
+				// print(rooms, halls)
 			}
 		}
 	}
 
-	for room := 0; room < 4; room++ {
-		for hall := 0; hall < 7; hall++ {
-			isOK, newCost := moveFromHallToRoom(hall, room, rooms, halls, cost, trace)
-			if isOK && newCost < best {
-				best = newCost
+	for room := 3; room >= 0; room-- {
+		for hall := 6; hall >= 0; hall-- {
+			if isOK, moveCost, depth := moveFromHallToRoom(hall, room, &rooms, &halls); isOK {
+				rooms[room][depth], halls[hall] = halls[hall], rooms[room][depth]
+				// fmt.Println(count, "--> ")
+				// print(rooms, halls)
+				move(rooms, halls, cost+moveCost, append(trace, Step{room: room, depth: depth, hall: hall, cost: moveCost}))
+				rooms[room][depth], halls[hall] = halls[hall], rooms[room][depth]
+				// fmt.Println(count, "<-- ")
+				// print(rooms, halls)
 			}
 		}
 	}
-
-	if best < 10000000 {
-		return true, best
-	}
-	return false, 0
 }
 
 func print(rooms Rooms, halls Halls) {
-	fmt.Println()
 	fmt.Printf("|%c%c.%c.%c.%c.%c%c|\n", halls[0], halls[1], halls[2], halls[3], halls[4], halls[5], halls[6])
 	fmt.Printf("  |%c|%c|%c|%c|\n", rooms[0][0], rooms[1][0], rooms[2][0], rooms[3][0])
 	fmt.Printf("  |%c|%c|%c|%c|\n", rooms[0][1], rooms[1][1], rooms[2][1], rooms[3][1])
@@ -253,31 +249,49 @@ func print(rooms Rooms, halls Halls) {
 }
 
 func main() {
-	//input
-	// rooms := Rooms{
-	// 	{'c', 'd', 'd', 'b'},
-	// 	{'a', 'c', 'b', 'a'},
-	// 	{'d', 'b', 'а', 'b'},
-	// 	{'d', 'a', 'c', 'c'},
-	// }
+	// input
+	rooms := Rooms{
+		{'c', 'd', 'd', 'b'},
+		{'a', 'c', 'b', 'a'},
+		{'d', 'b', 'a', 'b'},
+		{'d', 'a', 'c', 'c'},
+	}
 
 	// test
 	// rooms := Rooms{
 	// 	{'b', 'd', 'd', 'a'},
 	// 	{'c', 'c', 'b', 'd'},
-	// 	{'b', 'b', 'а', 'c'},
+	// 	{'b', 'b', 'a', 'c'},
 	// 	{'d', 'a', 'c', 'a'},
 	// }
 
-	// test
-	rooms := Rooms{
-		{'b', 'a', 'a', 'a'},
-		{'a', 'b', 'b', 'b'},
-		{'d', 'c', 'c', 'c'},
-		{'c', 'd', 'd', 'd'},
-	}
+	// My test
+	// rooms := Rooms{
+	// 	{'b', 'a', 'a', 'a'},
+	// 	{'a', 'b', 'b', 'b'},
+	// 	{'d', 'c', 'c', 'c'},
+	// 	{'c', 'd', 'd', 'd'},
+	// }
+
+	// // My test
+	// rooms := Rooms{
+	// 	{'b', 'a', 'a', 'a'},
+	// 	{'c', 'd', 'b', 'b'},
+	// 	{'b', 'c', 'c', 'c'},
+	// 	{'d', 'a', 'd', 'd'},
+	// }
 
 	halls := Halls{'.', '.', '.', '.', '.', '.', '.'}
 	print(rooms, halls)
-	fmt.Println(move(rooms, halls, 0, nil))
+
+	move(rooms, halls, 0, nil)
+	fmt.Println(bestTrack)
+
+	for _, step := range bestTrack {
+		rooms[step.room][step.depth], halls[step.hall] = halls[step.hall], rooms[step.room][step.depth]
+		print(rooms, halls)
+		fmt.Println("Cost", step.cost)
+	}
+
+	fmt.Println("Total cost", bestSolutionSoFar)
 }
