@@ -1,0 +1,23 @@
+inp w
+mul x 0
+add x z             x = z
+mod x 26            x %= 26
+** div z 1             
+** add x 13         x +=13
+eql x w             
+eql x 0             x = !(x == w)  
+
+mul y 0
+add y 25            
+mul y x             
+add y 1             
+mul z y             z = z * (x * 25 + 1)
+
+mul y 0
+add y w 
+** add y 0             
+mul y x             y = (w + 0) * x
+
+add z y             z = z + y
+
+

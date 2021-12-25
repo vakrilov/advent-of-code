@@ -93,54 +93,88 @@ func printHeader() {
 	fmt.Println()
 }
 
+func createFunc(step4, step5, step15 int) func(z, in int) int {
+	return func(z, in int) int {
+		x := z%26 + step5 //
+		z = z / step4     // 1 or 26
+
+		if x == in {
+			return z
+		} else {
+			return z*26 + (in + step15)
+		}
+	}
+}
+
+func backtrace(pos, target int, prog []func(z, in int) int, nums []int) {
+	if pos == -1 {
+		fmt.Println("solution", nums)
+	}
+
+	fn := prog[pos]
+	for in := 1; in < 10; in++ {
+		for z := 0; z < 300; z++ {
+			res := fn(z, in)
+
+			if res == target {
+				backtrace(pos-1, z, prog, append(nums, in))
+			}
+		}
+	}
+}
+
 func main() {
 	dat, _ := os.ReadFile(file)
 	lines := strings.Split(string(dat), "\n")
-
-	// lines = lines[0:18]
 	instr := make([]*Instruction, len(lines))
-
 	for idx, line := range lines {
 		instr[idx] = readLine(line)
 	}
 
-	var mem [4]int
-	input := []int{9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9}
-	printHeader()
-	for _, ins := range instr {
-		if ins.op == "inp" {
-			fmt.Println()
-			print(&Instruction{}, &mem, &input)
+	prog := make([]func(z, in int) int, 14)
+	fmt.Printf(" a4  a5 a15\n")
 
-		}
-		print(ins, &mem, &input)
-		execute(ins, &mem, &input)
+	for i := 0; i < 14; i++ {
+
+		program := instr[i*18 : (i+1)*18]
+		step4, _ := strconv.Atoi(program[4].arg2)
+		step5, _ := strconv.Atoi(program[5].arg2)
+		step15, _ := strconv.Atoi(program[15].arg2)
+		fmt.Printf("%3d %3d %3d\n", step4, step5, step15)
+		prog[i] = createFunc(step4, step5, step15)
+
 	}
 
-	// for sub := 0; sub < 14; sub++ {
-	// 	program := instr[sub*18 : (sub+1)*18]
-	// 	fmt.Println("-----------", sub, "-----------")
+	backtrace(13, 0, prog, nil)
 
-	// 	for i := 1; i < 10; i++ {
+	input := []int{1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9}
+	z := 0
+	for idx, sym := range prog {
+		z = sym(z, input[idx])
+		fmt.Println(z)
+	}
 
-	// 		for z := 0; z < 300; z++ {
+	// for progIdx := 13; progIdx >= 13; progIdx-- {
+	// 	fn := prog[progIdx]
+	// 	for in := 1; in < 10; in++ {
+	// 		for z := 0; z < 26; z++ {
+	// 			res := fn(z, in)
 
-	// 			mem := [4]int{0, 0, 0, z}
-	// 			input := &[]int{i}
-	// 			// printHeader()
-	// 			for _, ins := range program {
-	// 				// print(ins, &mem, input)
-	// 				execute(ins, &mem, input)
-	// 			}
-
-	// 			if mem[3] == 0 {
-
-	// 				fmt.Printf("I: %2d, Z: %2d R: %2d\n", i, z, mem[3])
+	// 			if res == 0 {
+	// 				fmt.Println("Z:", z, "IN:", in)
 	// 			}
 	// 		}
-
 	// 	}
 	// }
 
+	// for in := 1; in < 10; in++ {
+	// 	z := prog[0](0, in)
+
+	// 	// if res == 0 {
+	// 	fmt.Println("Z:", z, "IN:", in)
+	// 	// }
+	// }
+
 	// fmt.Println(memory)
+
 }
