@@ -1,5 +1,5 @@
 import os
-f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
+f = open(os.path.dirname(__file__) + "/sample.txt", "r", encoding="utf-8")
 
 
 class File:
@@ -24,14 +24,13 @@ class File:
 
         return self.size_cache
 
-    def print(self):
-        print("  " * self.level,
-              f'{self.name} ({self.file_type}) {self.get_size()}')
+    def __str__(self):
+        return "  " * self.level + f'{self.name} ({self.file_type}) {self.get_size()}\n'
 
-    def each(self, callback):
-        callback(self)
+    def visit(self):
+        yield self
         for child in self.children:
-            child.each(callback)
+            yield from child.visit()
 
 
 current = root = File("/", None, "dir")
@@ -52,14 +51,10 @@ for line in f.readlines():
     else:
         current.add(File(split[1], current, "file", int(split[0])))
 
-# print
-# root.each(lambda d: print("  " * d.level,
-#           f'{d.name} {d.file_type} {d.get_size()}'))
+print(*root.visit())
 
-dir_sizes = []
-root.each(lambda d: dir_sizes.append(d.get_size())
-          if d.file_type == "dir" else None)
-
+dir_sizes = [f.get_size() for f in root.visit() if f.file_type == "dir"]
 target = root.get_size() - 40000000
+
 print("Part 1:", sum(s for s in dir_sizes if s <= 100000))
 print("Part 2:", min(s for s in dir_sizes if s >= target))
