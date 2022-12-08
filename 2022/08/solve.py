@@ -13,7 +13,7 @@ def right(y, x): return (grid[y][i] for i in range(x+1, L))
 
 
 def visible_from_direction(y: int, x: int, direction) -> bool:
-    return all(x < grid[y][x] for x in direction(y, x))
+    return all(val < grid[y][x] for val in direction(y, x))
 
 
 def visible(y: int, x: int) -> bool:
