@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy 
 f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 
 class Monkey:
@@ -26,9 +27,10 @@ class Monkey:
         else:
             return self.if_false
 
-    def do_round(self, other_monkeys):
+    def do_round(self, other_monkeys, relax):
         for worry in self.items:
             new_worry = self.inspect(worry)
+            new_worry = relax(new_worry)
             throw_to = self.test(new_worry)
             other_monkeys[throw_to].items.append(new_worry)
         self.items = []
@@ -36,7 +38,7 @@ class Monkey:
 
 lines = [l.removesuffix("\n") for l in f.readlines()]
 
-monkeys = []
+original_monkeys = []
 for i in range(0,len(lines),7):
     monkey = Monkey()
     monkey.items = [int(worry) for worry in lines[i+1].removeprefix("  Starting items: ").split(", ")]
@@ -57,7 +59,23 @@ for i in range(0,len(lines),7):
     monkey.if_true = int(lines[i+4].removeprefix("    If true: throw to monkey "))
     monkey.if_false = int(lines[i+5].removeprefix("    If false: throw to monkey "))
 
-    monkeys.append(monkey)
+    original_monkeys.append(monkey)
+
+def score():
+    active = [m.inspect_count for m in monkeys]
+    active.sort(reverse=True)
+    return active[0] * active[1]
+
+monkeys = deepcopy(original_monkeys)
+
+for i in range(20):
+    for m in monkeys:
+        m.do_round(monkeys, lambda x: x//3)
+
+print("Part 1:", score())
+
+
+monkeys = deepcopy(original_monkeys)
 
 common_div = 1
 for m in monkeys:
@@ -65,18 +83,6 @@ for m in monkeys:
 
 for i in range(10000):
     for m in monkeys:
-        m.do_round(monkeys)
+        m.do_round(monkeys, lambda x: x % common_div)
 
-    # Keep numbers low
-    for m in monkeys:
-        m.items = [worry % common_div for worry in m.items]
-
-    # print("Round", i+1)
-    # for i, m in enumerate(monkeys):
-    #         print(f'  Monkey {i}: {m.items}')
-
-active = [m.inspect_count for m in monkeys]
-active.sort(reverse=True)
-
-
-print(active[0] * active[1])
+print("Part 2:",  score())
