@@ -41,19 +41,25 @@ def process(r, c, height, depth):
     queue.append((r, c, depth + 1))
 
 
+part1_answer = -1
+part2_answer = -1
 while len(queue) > 0:
     row, col, depth = queue.pop(0)
     path_lengths[row][col] = depth
 
     height = grid[row][col]
 
+    if part2_answer < 0 and height == 0:
+        part2_answer = depth # first point with elevation 0 reached
+
+    if (row, col) == start:
+        part1_answer = depth
+        break
+
     process(row-1, col, height, depth)
     process(row+1, col, height, depth)
     process(row, col-1, height, depth)
     process(row, col+1, height, depth)
 
-
-print("Part 1:", path_lengths[start[0]][start[1]])
-
-reachable_starts = ((r, c) for r, c in product(range(ROWS), range(COLS)) if grid[r][c] == 0 and path_lengths[r][c] > 0)
-print("Part 2:", min(path_lengths[r][c] for r, c in reachable_starts) )
+print("Part 1:", part1_answer)
+print("Part 2:", part2_answer)
