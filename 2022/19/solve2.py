@@ -4,6 +4,8 @@ import os
 
 f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 
+lines = [l.removesuffix("\n") for l in f.readlines()]
+
 
 def read_blueprint(line):
     ore = re.search(r"Each ore robot costs (\d+) ore", line).group(1)
@@ -13,12 +15,18 @@ def read_blueprint(line):
     geode = re.search(
         r"Each geode robot costs (\d+) ore and (\d+) obsidian", line).group(1, 2)
 
+    max_ore = max(int(clay[0]), int(obsidian[0]), int(geode[0]))
+    max_clay = int(obsidian[1])
+    max_obs = int(geode[1])
+    max_geode = 1000
+
     blueprint = (
-        ((int(geode[0]), 0, int(geode[1]), 0), (0, 0, 0, 1)),
-        ((int(obsidian[0]), int(obsidian[1]), 0, 0), (0, 0, 1, 0)),
-        ((int(clay), 0, 0, 0), (0, 1, 0, 0)),
-        ((int(ore), 0, 0, 0), (1, 0, 0, 0)),
+        ((int(geode[0]), 0, int(geode[1]), 0), (0, 0, 0, 1), max_geode, 3),
+        ((int(obsidian[0]), int(obsidian[1]), 0, 0), (0, 0, 1, 0), max_obs, 2),
+        ((int(clay), 0, 0, 0), (0, 1, 0, 0), max_clay, 1),
+        ((int(ore), 0, 0, 0), (1, 0, 0, 0), max_ore, 0),
     )
+
     return blueprint
 
 
@@ -41,6 +49,7 @@ def add(a, b):
 
 MAX_GEODES = 0
 
+
 @cache
 def simulate(robots, resources, blueprint, time):
     global MAX_GEODES
@@ -51,16 +60,15 @@ def simulate(robots, resources, blueprint, time):
             print("FOUND MORE GEODES: ", resources[3], robots, resources)
         return resources[3]
 
-    geode_robots = robots[3]
-    max_possible_geodes = geode_robots * time + \
+    max_possible_geodes = robots[3] * time + \
         int((time-1) * time/2) + resources[3]
     if max_possible_geodes < MAX_GEODES:
         return 0
 
     p = []
 
-    for b, r in blue:
-        if can_build(b, resources):
+    for b, r, max_robots, position in blueprint:
+        if robots[position] < max_robots and can_build(b, resources):
             new_robots = add(robots, r)
             after_build = build(b, resources)
             new_resources = add(after_build, robots)
@@ -71,13 +79,27 @@ def simulate(robots, resources, blueprint, time):
     return max(p)
 
 
-res = 1
-for i, line in enumerate(f.readlines()):
-    if i < 3:
+part1_res = 0
+for blueprint_number, line in enumerate(lines):
+    blue = read_blueprint(line)
+    MAX_GEODES = 0
+    print("------------------------------------------------")
+    print("Blueprint ", blueprint_number + 1) 
+    print("Max robots: ", list(b[2] for b in blue))
+    score = simulate((1, 0, 0, 0), (0, 0, 0, 0), blue, 24)
+    print("Blueprint ", blueprint_number + 1, ": score[24]", score)
+    part1_res += (blueprint_number + 1) * score
+
+print("Part 1:", part1_res)
+
+
+part2_res = 1
+for blueprint_number, line in enumerate(lines):
+    if blueprint_number < 3:
         blue = read_blueprint(line)
         MAX_GEODES = 0
         score = simulate((1, 0, 0, 0), (0, 0, 0, 0), blue, 32)
-        print(score)
-        res *= score
+        print("Blueprint ", blueprint_number + 1, ": score[32]:", score)
+        part2_res *= score
 
-print("Part 2:", res)
+print("Part 2:", part2_res)
