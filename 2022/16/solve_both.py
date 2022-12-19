@@ -64,18 +64,17 @@ for i, name_i in enumerate(valves):
         distances[i][j] = dist(name_i, name_j)
 
 
-def generate_paths(current, open: set[int], time, current_path, generated_paths):
+def generate_paths(current, open_valves: set[int], time, current_path, generated_paths):
     generated_paths.append(current_path)
 
-    for next_node in open:
+    for next_node in open_valves:
         d = distances[current][next_node]
         if time > d + 1:
-            generate_paths(next_node, open - {next_node},
+            generate_paths(next_node, open_valves - {next_node},
                            time-d-1, current_path + (next_node,), generated_paths)
 
 
-def eval_path(start, path, time):
-    current = start
+def eval_path(current, path, time):
     result = 0
     for next_node in path:
         d = distances[current][next_node]
@@ -87,17 +86,17 @@ def eval_path(start, path, time):
 
 
 # part 1
-part1_paths = []
-generate_paths(start, set(range(len(valves) - 1)), 30, (), part1_paths)
-print("[Part 1]: paths to eval", len(part1_paths))
-print("Part 1:", max(eval_path(start, p, 30) for p in part1_paths))
+paths = []
+generate_paths(start, set(range(len(valves) - 1)), 30, (), paths)
+print("[Part 1]: paths to eval", len(paths))
+print("Part 1:", max(eval_path(start, p, 30) for p in paths))
 
 # part 2
-p1_paths = []
-generate_paths(start, set(range(len(valves) - 1)), 26, (), p1_paths)
-print("[Part 2]: paths to eval", len(p1_paths))
+player1_paths = []
+generate_paths(start, set(range(len(valves) - 1)), 26, (), player1_paths)
+print("[Part 2]: paths to eval", len(player1_paths))
 best = 0
-for i, p in enumerate(p1_paths):
+for i, p in enumerate(player1_paths):
     p1_score = eval_path(start, p, 26)
 
     if p1_score < best / 2:
