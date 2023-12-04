@@ -37,7 +37,7 @@ def is_valid(game, constraint):
 
 
 
-games = [ parse_game(line[line.index(":") + 2 :]) for line in lines]
+games = [parse_game(line[line.index(":") + 2 :]) for line in lines]
 
 res = 0
 for game_num, game in enumerate(games):
