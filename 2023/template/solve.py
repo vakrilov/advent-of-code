@@ -1,5 +1,5 @@
 import os
-f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
+f = open(os.path.dirname(__file__) + "/sample.txt", "r", encoding="utf-8")
 
 
 def solve(line: str, length: int):
