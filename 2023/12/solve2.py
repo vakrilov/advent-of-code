@@ -1,6 +1,6 @@
 import os
 
-f = open(os.path.dirname(__file__) + "/sample.txt", "r", encoding="utf-8")
+f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 
 lines = [l.removesuffix("\n") for l in f.readlines()]
 
@@ -18,38 +18,20 @@ for line in lines:
 
 
 def is_valid(template, prefix):
+    if len(template) < len(prefix):
+        print("THIS SHOULD NOT HAPPEN")
+        exit()
+
     for i in range(len(prefix)):
         if template[i] != "?" and template[i] != prefix[i]:
             return False
     return True
 
-
-def gen(template, nums):
-    if template == "":
-        yield ""
-        return
-
-    if len(nums) == 0:
-        rest = "." * len(template)
-        if is_valid(template, rest):
-            yield rest
-        return
-
-    free = len(template) - sum(nums) - len(nums) + 1
-    for i in range(free + 1):
-        prefix = "." * i + nums[0] * "#" + "."
-        if len(prefix) > len(template):
-            prefix = prefix[: len(template)]
-        if is_valid(template, prefix):
-            for suffix in gen(template[len(prefix) :], nums[1:]):
-                yield prefix + suffix
-
-
 def split_on_dot(template, nums, mid):
     left = template[:mid]
     right = template[mid + 1 :]
     res = 0
-    for num_idx in range(len(nums)):
+    for num_idx in range(len(nums) + 1):
         left_nums = nums[:num_idx]
         right_nums = nums[num_idx:]
 
@@ -67,22 +49,28 @@ def split_on_hash(template, nums, mid):
         left_nums = nums[:num_idx]
         right_nums = nums[num_idx + 1 :]
 
-        str = "." + "#" * num + "."
+        add_dot_start = 0 if num_idx == 0 else 1
+        add_dot_end = 0 if num_idx == (len(nums) - 1) else 1
+
+        str = "." * add_dot_start + "#" * num + "." * add_dot_end
+
         for i in range(num):
-            check = template[mid - i - 2 : mid + num - i]
+            str_start = mid - i - add_dot_start
+            str_end = str_start + len(str)
+
+            if str_start < 0 or str_end > len(template):
+                continue
+
+            check = template[str_start:str_end]
+
             if is_valid(check, str):
-                left_template = template[: mid - i - 1]
-                right_template = template[mid + num - i + 1 :]
+                left_template = template[:str_start]
+                right_template = template[str_end:]
 
                 left_res = solve_split(left_template, left_nums)
                 right_res = (
                     solve_split(right_template, right_nums) if left_res > 0 else 0
                 )
-                # if left_res * right_res > 0:
-                #     print("split_on_hash", template, nums)
-                #     print("  check:", check, str)
-                #     print("  left:", left_template, left_nums)
-                #     print("  right:", right_template, right_nums)
 
                 result += left_res * right_res
     return result
@@ -90,13 +78,11 @@ def split_on_hash(template, nums, mid):
 
 def solve_split(template, nums):
     result = 0
-    if len(template) < 16:
-        result = sum(1 for _ in gen(template, nums))
-
-    elif len(nums) == 0:
+    if len(nums) == 0:
         is_valid(template, "." * len(template))
         result = 1 if is_valid(template, "." * len(template)) else 0
-
+    elif sum(nums) + len(nums) - 1 > len(template):
+        result = 0
     else:
         mid = len(template) // 2
         mid_char = template[mid]
@@ -109,43 +95,7 @@ def solve_split(template, nums):
             dot = split_on_dot(template, nums, mid)
             hash = split_on_hash(template, nums, mid)
             result = dot + hash
-    # if(result > 0):
-    #     print("solve_split", template, nums)
-    #     print("  result:", result)
+
     return result
 
-
-# (t, n) = rows[4]
-# print(t)
-# print(solve_split(t, n))
-# print(sum(1 for _ in gen(t, n)))
-
-for t, n in rows:
-# for t, n in rows[0:1]:
-    print()
-    print(t, n)
-    print("solve:", solve_split(t, n))
-    print("  gen:", sum(1 for _ in gen(t, n)))
-
-    # for candidate in gen(t, n):
-    #     print(candidate)
-
-# t = "???.###????.###????"
-# n = [1, 1, 3, 1, 1, 3]
-# print("solve:", solve_split(t, n))
-# print("  gen:", sum(1 for _ in gen(t, n)))
-# for candidate in gen(t, n):
-#     print(t)
-#     print(candidate)
-
-
-res = 0
-for t, n in rows[1:2]:
-    # print(t, n)
-    res += solve_split(t, n)
-    # r = 0
-    # for candidate in gen(t, n):
-    #     r += 1
-    # print(r)
-    # res += r
-print("part2", res)
+print("part2:", sum(solve_split(t, n) for t, n in rows))
