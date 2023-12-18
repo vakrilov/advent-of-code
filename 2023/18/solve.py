@@ -4,9 +4,13 @@ f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 LEN = 402
 start = (200, 200)
 
+# LEN = 100
+# start = (5, 5)
+
 
 current = start
 board = [["."] * LEN for _ in range(LEN)]
+
 
 def p():
     for i in range(LEN):
@@ -42,7 +46,7 @@ for line in lines:
         path.append(current)
         board[current[0]][current[1]] = "#"
 
-
+p()
 
 stack = [(start[0] + 1, start[1] + 1)]
 visited = set()
@@ -67,4 +71,5 @@ while len(stack) > 0:
     if board[r][c + 1] == ".":
         stack.append((r, c + 1))
 
-print(sum([sum([1 if c == "#" else 0 for c in r]) for r in board]))
+p()
+print("part1:", sum([sum([1 if c == "#" else 0 for c in r]) for r in board]))
