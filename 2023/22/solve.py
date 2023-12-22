@@ -75,9 +75,38 @@ def depends_on(part):
     return list(deps)
 
 can_remove = set()
+depends_on_map = dict()
+
 for part in dropped_parts:
     deps = depends_on(part)
+    depends_on_map[part[2]]= deps
+
     if len(deps) == 1:
         can_remove.add(deps[0])
 
-print(len(dropped_parts) - len(can_remove))
+print("part1:", len(dropped_parts) - len(can_remove))
+
+def check_falls(part):
+    depends_on_copy = dict()
+    for k, v in depends_on_map.items():
+        depends_on_copy[k] = set(v)
+
+
+    remove_q = [part[2]]
+    dropped = 0
+    while len(remove_q):
+        current_part = remove_q.pop()
+
+        for key, value in depends_on_copy.items():
+            if current_part in value:
+                value.remove(current_part)
+                if len(value) == 0 and dropped_parts[key - 1][2] > 0:
+                    dropped += 1
+                    remove_q.append(key)
+    return dropped
+
+
+res = 0
+for part in dropped_parts:
+  res += check_falls(part)
+print("part2:", res)
