@@ -1,4 +1,5 @@
 import os
+import math
 
 f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 
@@ -75,6 +76,10 @@ class ConjunctionModule:
 
         self.state[fr] = pulse
         out_pulse = "low" if all(v == "high" for v in self.state.values()) else "high"
+
+        if out_pulse == "high" and interesting_nodes.get(self.name) == 0:
+            interesting_nodes[self.name] = GLOBAL_STEP
+
         return [(self.name, out_pulse, out) for out in self.outputs]
 
 
@@ -135,6 +140,12 @@ def press():
     return lows, highs
 
 
-for i in range(1, 1000000):
-    lows, highs = press()
-    print(f"{i:>10}, {lows:>2}, {highs:>2}")
+interesting_nodes = dict({"hn": 0, "kt": 0, "vn": 0, "ph": 0})
+
+GLOBAL_STEP = 0
+while any(x == 0 for x in interesting_nodes.values()):
+    GLOBAL_STEP += 1
+    press()
+
+print("part2:", math.lcm(*interesting_nodes.values()))
+
