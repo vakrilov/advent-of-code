@@ -25,8 +25,8 @@ FROM = -2000
 TO = 2000
 x = 0
 
-p1x, p1y, p1z = positions[2]
-v1x, v1y, v1z = velocities[2]
+p1x, p1y, p1z = positions[3]
+v1x, v1y, v1z = velocities[3]
 
 p2x, p2y, p2z = positions[1]
 v2x, v2y, v2z = velocities[1]
@@ -64,14 +64,18 @@ def check(vx, vy, vz):
         print(f"Skipping: vx: {vx}, vy: {vy}, vz: {vz}")
         return
 
-    t2 = round((Bx - By) / (Ay - Ax), 5)
-    t22 = round((Bx - Bz) / (Az - Ax), 5)
-    if t2 == t22 and t2.is_integer() and t2 > 0:
+    t2 = round((Bx - By) / (Ay - Ax))
+    t22 = round((Bx - Bz) / (Az - Ax))
+    if True or t2 == t22 and t2.is_integer() and t2 > 0:
         t1 = Ax * t2 + Bx
 
         x = p1x + t1 * (v1x - vx)
         y = p1y + t1 * (v1y - vy)
         z = p1z + t1 * (v1z - vz)
+        print(f"x: {x}, y: {y}, z: {z}")
+        print(f"x: {x + y + z}")
+        
+        
         if (
             t1.is_integer()
             and t1 > 0
@@ -92,15 +96,8 @@ def check(vx, vy, vz):
 # vx 99
 # vy 269
 # vz 81
-check(99, 269, 81)
-check(99, 269, -81)
-check(99, -269, 81)
-check(99, -269, -81)
-check(-99, 269, 81)
-check(-99, 269, -81)
-check(-99, -269, 81)
-check(-99, -269, -81)
-# solutions = []
+check(99, 81, 269)
+
 # for vx in range(99,100):
 #     print(f"vx: {vx}")
 #     for vy in range(FROM, TO):
