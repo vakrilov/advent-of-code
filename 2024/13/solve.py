@@ -1,5 +1,6 @@
 # %%
 import os
+import math
 
 f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 
@@ -50,4 +51,35 @@ def solve(btnA, btnB, target):
 
 
 print("part1", sum(solve(*m) for m in machines))
+# %%
+
+
+# %%
+
+
+def solve2(btnA, btnB, target):
+    ax, ay = btnA
+    bx, by = btnB
+    tx, ty = target[0] + 10000000000000, target[1] + 10000000000000
+
+    gcd_x = math.gcd(ax, bx)
+    gcd_y = math.gcd(ay, by)
+
+    can_x = tx % gcd_x == 0
+    can_y = ty % gcd_y == 0
+
+    if not (can_x and can_y):
+        return 0
+
+    print("SOLUTION POSSIBLE")
+    print(btnA)
+    print(btnB)
+    print(tx, ty)
+
+
+# solve2(*machines[0])
+
+for m in machines:
+    solve2(*m)
+
 # %%
