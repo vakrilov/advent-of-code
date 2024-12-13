@@ -35,12 +35,12 @@ for i in range(0, len(lines), 4):
 
 
 # %%
-def solve(btnA, btnB, target):
+def solve(btnA, btnB, target, maxCoins=100):
     solution = float("inf")
     found = False
 
-    for pressA in range(0, 101):
-        for pressB in range(0, 101):
+    for pressA in range(0, maxCoins + 1):
+        for pressB in range(0, maxCoins + 1):
             totalX = pressA * btnA[0] + pressB * btnB[0]
             totalY = pressA * btnA[1] + pressB * btnB[1]
 
@@ -53,33 +53,30 @@ def solve(btnA, btnB, target):
 print("part1", sum(solve(*m) for m in machines))
 # %%
 
-
-# %%
-
-
 def solve2(btnA, btnB, target):
-    ax, ay = btnA
-    bx, by = btnB
-    tx, ty = target[0] + 10000000000000, target[1] + 10000000000000
+    x1, y1 = btnA
+    x2, y2 = btnB
+    a, b = target
 
-    gcd_x = math.gcd(ax, bx)
-    gcd_y = math.gcd(ay, by)
+    # Calucate reverse matrix to convert to coordinate system wiht btnA and btnB as base
+    determinant = x1 * y2 - x2 * y1
 
-    can_x = tx % gcd_x == 0
-    can_y = ty % gcd_y == 0
+    u = (a * y2 - b * x2) / determinant
+    v = (-a * y1 + b * x1) / determinant
 
-    if not (can_x and can_y):
+    if u.is_integer() and v.is_integer() and u >= 0 and v >= 0:
+        return int(3 * u + v)
+    else:
         return 0
 
-    print("SOLUTION POSSIBLE")
-    print(btnA)
-    print(btnB)
-    print(tx, ty)
+
+print("part1 with solve2", sum(solve2(*m) for m in machines))
+
+new_machines = [
+    (btn1, btn2, (target[0] + 10000000000000, target[1] + 10000000000000))
+    for btn1, btn2, target in machines
+]
+
+print("part2: ", sum(solve2(*m) for m in new_machines))
 
 
-# solve2(*machines[0])
-
-for m in machines:
-    solve2(*m)
-
-# %%
