@@ -1,8 +1,9 @@
 # %%
 import os
 
-f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
+# f = open(os.path.dirname(__file__) + "/sample.txt", "r", encoding="utf-8")
 # W, H = 11, 7
+f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 W, H = 101, 103
 lines = [l.removesuffix("\n") for l in f.readlines()]
 
@@ -19,11 +20,13 @@ for line in lines:
 
 
 def p(pos):
+    out = []
     for y in range(H):
         for x in range(W):
             count = sum([1 for p in pos if p == (x, y)])
-            print(count if count > 0 else ".", end="")
-        print()
+            out.append(str(count if count > 0 else "."))
+        out.append("\n")
+    print("".join(out))
 
 
 def simulate(turns):
@@ -46,16 +49,22 @@ def simulate(turns):
         elif x > W // 2 and y > H // 2:
             q[3] += 1
 
-    if q[0] == q[1] and q[2] == q[3]:
-        print("turns:", turns)
-        p(new_pos)
+    print()
+    print("turns:", turns)
+    p(new_pos)
 
     return q[0] * q[1] * q[2] * q[3]
 
 
 print("part 1:", simulate(100))
 
-# for i in range(1, 100000):
-#     simulate(i)
+# %%
+# simulate(13)
+# simulate(114)
+# simulate(215)
 
+# for i in range(13, 10000, 101):
+#     simulate(i)
+simulate(7790)
+print("part 2:", 7790)
 # %%
