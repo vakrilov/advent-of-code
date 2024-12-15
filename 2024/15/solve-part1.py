@@ -8,10 +8,7 @@ lines = [l.removesuffix("\n") for l in f.readlines()]
 L = lines.index("")
 
 board = [[c for c in l] for l in lines[0:L]]
-print(board)
-
 commands = [c for c in "".join(lines[L + 1 :])]
-len(commands)
 
 # %%
 
@@ -24,7 +21,6 @@ def p():
     print()
 
 
-p()
 # %%
 
 robot = [0, 0]
@@ -33,7 +29,6 @@ for r in range(len(board)):
         if board[r][c] in "@":
             robot = [r, c]
             break
-print(robot)
 
 
 # %%
@@ -63,7 +58,7 @@ def move(pos, dir):
 # %%
 for c in commands:
     moved, robot = move(robot, directions[c])
-p()
+# p()
 
 # %%
 sum = 0
@@ -71,5 +66,5 @@ for r in range(len(board)):
     for c in range(len(board[0])):
         if board[r][c] == "O":
             sum += 100 * r + c
-print(sum)
+print("part1:", sum)
 # %%
