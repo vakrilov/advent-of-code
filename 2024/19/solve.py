@@ -1,5 +1,6 @@
 # %%
 import os
+from functools import cache
 
 f = open(os.path.dirname(__file__) + "/input.txt", "r", encoding="utf-8")
 
@@ -7,6 +8,23 @@ lines = [l.removesuffix("\n") for l in f.readlines()]
 
 towels = lines[0].split(", ")
 patterns = lines[2:]
+
+# %%
+
+
+@cache
+def check(pattern: str):
+    if len(pattern) == 0:
+        return 1
+
+    matches = [t for t in towels if pattern.startswith(t)]
+    return sum(check(pattern[len(t) :]) for t in matches)
+
+
+print("part1:", sum(check(p) > 0 for p in patterns))
+print("part2:", sum(check(p) for p in patterns))
+
+# %%
 
 
 class Node:
@@ -57,7 +75,7 @@ def check_pattern(trie, pattern):
 
 
 part1 = sum([1 if check_pattern(trie, p) else 0 for p in patterns])
-print("part1:", part1)
+print("part1(with trie):", part1)
 
 
 # %%
