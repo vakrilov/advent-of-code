@@ -26,14 +26,14 @@ print(start, end)
 # %%
 
 
-def bfs(board, start, end, cheat_start, cheat_end):
+def bfs(board, start, end):
     queue = [(start, [(start)])]
     visited = set()
     visited.add(start)
     while queue:
         (row, col), path = queue.pop(0)
         if (row, col) == end:
-            return path + [end]
+            return path
 
         for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
             new_row, new_col = row + dr, col + dc
@@ -45,11 +45,6 @@ def bfs(board, start, end, cheat_start, cheat_end):
             ):
                 queue.append(((new_row, new_col), path + [(new_row, new_col)]))
                 visited.add((new_row, new_col))
-
-        if (row, col) == cheat_start:
-            cheat_node = (cheat_end[0] + 1000, cheat_end[1] + 1000)
-            queue.append((cheat_end, path + [cheat_node]))
-            visited.add(cheat_end)
     return False
 
 
@@ -58,42 +53,78 @@ def print_path(path):
         for col in range(L):
             if (row, col) in path:
                 print("0", end="")
-            elif (row + 1000, col + 1000) in path:
-                print("!", end="")
             else:
                 print(board[row][col], end="")
-
         print()
 
 
-base_path = bfs(board, start, end, (-1, -1), (-1, -1))
+base_path = bfs(board, start, end)
 base_len = len(base_path)
-print(base_len)
 # print_path(base_path)
+print("Base path len", base_len)
 
-# %%
-saves = {}
+cheat_moves = [(2, 0, 2), (-2, 0, 2), (0, 2, 2), (0, -2, 2)]
+index_map = {}
 for i, tile in enumerate(base_path):
-    row, col = tile
-    cheat_moves = [(2, 0), (-2, 0), (0, 2), (0, -2)]
-    for dr, dc in cheat_moves:
-        new_row, new_col = row + dr, col + dc
-        new = (new_row, new_col)
-        if new in base_path:
-            start_cheat_index = base_path.index(tile)
-            end_cheat_index = base_path.index(new)
-            save = end_cheat_index - start_cheat_index - 2
+    index_map[tile] = i
 
-            if save > 0:
-                saves[save] = saves.get(save, 0) + 1
+print(index_map)
 
-for save in sorted(saves.keys()):
-    print(save, saves[save])
+
+def solve_cheat(cheat_moves):
+    saves = {}
+    for start_cheat_index, start_cheat in enumerate(base_path):
+        # print("cheats on move", start_cheat_index)
+        row, col = start_cheat
+        for dr, dc, cheat_len in cheat_moves:
+            new_row, new_col = row + dr, col + dc
+            end_cheat = (new_row, new_col)
+
+            if end_cheat in index_map:
+                end_cheat_index = index_map[end_cheat]
+                save = end_cheat_index - start_cheat_index - cheat_len
+
+                if save > 0:
+                    saves[save] = saves.get(save, 0) + 1
+    return saves
+
+
+saves = solve_cheat(cheat_moves)
+
+
+def print_saves(saves, above):
+    res = 0
+    for save in sorted(saves.keys()):
+        if save >= above:
+            res += saves[save]
+            print(saves[save], "saves for", save, "pico seconds")
+    return res
+
+
+print_saves(saves, 0)
+
+print("part1:", print_saves(saves, 100))
+# %%
+
+cheat_moves2 = []
+RANGE = 20
+for total_len in range(1, RANGE + 1):
+    for x_len in range(0, total_len):
+        y_len = total_len - x_len
+        cheat_moves2 += [
+            (x_len, y_len, total_len),
+            (-x_len, y_len, total_len),
+            (x_len, -y_len, total_len),
+            (-x_len, -y_len, total_len),
+        ]
+print(cheat_moves2)
+
 
 # %%
-result = 0
-for save in sorted(saves.keys()):
-    if save >= 100:
-        result += saves[save]
-print("part1:", result)
+saves2 = solve_cheat(cheat_moves2)
+print_saves(saves2, 100)
+
+# for save in sorted(saves2.keys()):
+#     print(save, saves2[save])
+
 # %%
