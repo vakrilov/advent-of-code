@@ -68,8 +68,6 @@ index_map = {}
 for i, tile in enumerate(base_path):
     index_map[tile] = i
 
-print(index_map)
-
 
 def solve_cheat(cheat_moves):
     saves = {}
@@ -92,38 +90,33 @@ def solve_cheat(cheat_moves):
 saves = solve_cheat(cheat_moves)
 
 
-def print_saves(saves, above):
+def count_saves(saves, above):
     res = 0
     for save in sorted(saves.keys()):
         if save >= above:
             res += saves[save]
-            print(saves[save], "saves for", save, "pico seconds")
+            # print(saves[save], "saves for", save, "pico seconds")
     return res
 
 
-print_saves(saves, 0)
+count_saves(saves, 0)
 
-print("part1:", print_saves(saves, 100))
+print("part1:", count_saves(saves, 100))
 # %%
 
-cheat_moves2 = []
+cheat_moves2 = set()
 RANGE = 20
 for total_len in range(1, RANGE + 1):
-    for x_len in range(0, total_len):
+    for x_len in range(0, total_len + 1):
         y_len = total_len - x_len
-        cheat_moves2 += [
-            (x_len, y_len, total_len),
-            (-x_len, y_len, total_len),
-            (x_len, -y_len, total_len),
-            (-x_len, -y_len, total_len),
-        ]
-print(cheat_moves2)
-
+        cheat_moves2.add((x_len, y_len, total_len))
+        cheat_moves2.add((-x_len, y_len, total_len))
+        cheat_moves2.add((x_len, -y_len, total_len))
+        cheat_moves2.add((-x_len, -y_len, total_len))
 
 # %%
-saves2 = solve_cheat(cheat_moves2)
-print_saves(saves2, 100)
-
+saves2 = solve_cheat(set(cheat_moves2))
+print("part2:", count_saves(saves2, 100))
 # for save in sorted(saves2.keys()):
 #     print(save, saves2[save])
 
